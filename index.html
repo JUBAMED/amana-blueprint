@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0C0C0B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="AMANA">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Vereins-OS Blueprint 2026 — AMANA</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -257,6 +264,7 @@ footer strong{color:rgba(255,255,255,.6);}
     <button class="tr-btn"        id="btn-open" onclick="bpSetFilter('open')">⬜ Offen</button>
     <button class="tr-btn"        id="btn-wip"  onclick="bpSetFilter('wip')" style="--tr-active:#F57C00;">◑ In Arbeit</button>
     <button class="tr-btn"        id="btn-done" onclick="bpSetFilter('done')">✓ Implementiert</button>
+    <button class="tr-btn" id="install-app-btn" style="display:none;border-color:#1A1A18;color:#1A1A18;" onclick="installAMANA()">＋ AMANA installieren</button>
     <button class="tr-btn" onclick="resetTracker()" style="border-color:#C62828;color:#C62828;margin-left:auto;">↺ Reset</button>
     <span id="tracker-total"></span>
   </div>
@@ -1313,5 +1321,58 @@ bpRestore();
 bpUpdate();
 
 </script>
+
+<script>
+/* ── AMANA PWA ─────────────────────────────────────────────────────────── */
+(function(){
+  let deferredInstallPrompt = null;
+  const installBtn = document.getElementById('install-app-btn');
+
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true;
+  }
+
+  window.addEventListener('beforeinstallprompt', function(event){
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    if(installBtn && !isStandalone()) installBtn.style.display = 'inline-flex';
+  });
+
+  window.installAMANA = async function(){
+    if(!deferredInstallPrompt) return;
+
+    deferredInstallPrompt.prompt();
+    const result = await deferredInstallPrompt.userChoice;
+
+    if(result && result.outcome === 'accepted'){
+      deferredInstallPrompt = null;
+      if(installBtn) installBtn.style.display = 'none';
+    }
+  };
+
+  window.addEventListener('appinstalled', function(){
+    deferredInstallPrompt = null;
+    if(installBtn) installBtn.style.display = 'none';
+  });
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js', {scope:'./'})
+        .then(function(registration){
+          console.log('AMANA Service Worker aktiv:', registration.scope);
+        })
+        .catch(function(error){
+          console.error('AMANA Service Worker konnte nicht registriert werden:', error);
+        });
+    });
+  }
+
+  if(isStandalone() && installBtn){
+    installBtn.style.display = 'none';
+  }
+})();
+</script>
+
 </body>
 </html>
