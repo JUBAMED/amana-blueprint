@@ -1,5 +1,5 @@
 /* AMANA Blueprint – GitHub Pages Service Worker */
-const CACHE_NAME = "amana-blueprint-v3";
+const CACHE_NAME = "amana-blueprint-v4";
 
 const APP_SHELL = [
   "./",
